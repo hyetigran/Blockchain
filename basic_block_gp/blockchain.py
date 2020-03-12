@@ -32,12 +32,28 @@ class Blockchain(object):
 
         block = {
             # TODO
+            'index': len(self.chain) + 1,
+            'timestamp': time(),
+            'transactions': self.current_transactions,
+            'proof': proof,
+            'previous_hash': previous_hash or self.hash(self.chain[-1])
         }
 
         # Reset the current list of transactions
+        self.current_transactions = []
         # Append the chain to the block
+        self.chain.append(block)
         # Return the new block
-        pass
+        return block
+
+    def new_transaction(self, sender, recipient, amount):
+        self.current_transactions.append({
+            'sender': sender,
+            'recipient': recipient,
+            'amount': amount
+        })
+
+        return self.last_block['index'] + 1
 
     def hash(self, block):
         """
@@ -56,9 +72,9 @@ class Blockchain(object):
         # or we'll have inconsistent hashes
 
         # TODO: Create the block_string
-
+        block_string = json.dumps(block, sort_keys=True).encode()
         # TODO: Hash this string using sha256
-
+        hashed_block = hashlib.sha256(block_string).hexdigest()
         # By itself, the sha256 function returns the hash in a raw string
         # that will likely include escaped characters.
         # This can be hard to read, but .hexdigest() converts the
@@ -66,7 +82,7 @@ class Blockchain(object):
         # easier to work with and understand
 
         # TODO: Return the hashed block string in hexadecimal format
-        pass
+        return hashed_block
 
     @property
     def last_block(self):
@@ -81,8 +97,13 @@ class Blockchain(object):
         :return: A valid proof for the provided block
         """
         # TODO
-        pass
         # return proof
+        block_string = json.dumps(block, sort_keys=True).encode()
+        proof = 0
+        while self.valid_proof(block_string, proof) is False:
+            proof += 1
+
+        return proof
 
     @staticmethod
     def valid_proof(block_string, proof):
@@ -97,8 +118,35 @@ class Blockchain(object):
         :return: True if the resulting hash is a valid proof, False otherwise
         """
         # TODO
-        pass
+       guess = f"{block_string}{proof}".encode()
+       guess_hash = hashlib.sha256(guess).hexdigest()
+
+       return guess_hash[:3] = "000"
         # return True or False
+
+    def valid_chain(self, chain):
+        prev_block = chain[0]
+        current_index = 1
+
+        while current_index < len(chain):
+            block = chain[current_index]
+            print(f'{prev_block}')
+            print(f'{block}')
+            
+            if block['previous_hash'] != self.hash(prev.block):
+                print(f'invalid previous hash on block {current_index}')
+                return False
+            
+            block_string = json.dumps(prev_block, sort_keys=True).encode()
+            if not self.valid_proof(block_string, block['proof']):
+                print(f'Found invalid proof on block {current_index}')
+                return False
+            
+            prev_block = block
+            current_index += 1
+
+        return True
+
 
 
 # Instantiate our Node
@@ -114,11 +162,20 @@ blockchain = Blockchain()
 @app.route('/mine', methods=['GET'])
 def mine():
     # Run the proof of work algorithm to get the next proof
-
+    proof = blockchain.proof_of_work(blockchain.last_block)
     # Forge the new Block by adding it to the chain with the proof
+    previous_hash = blockchain.hash(blockchain.last_block)
+    block = blockchain.new_block(proof, previous_hash)
 
+    blockchain.new_transaction(
+        sender="0",
+        recipeient = node_identifier,
+        amount='21'
+    )
     response = {
         # TODO: Send a JSON response with the new block
+        'message': 'new block mined',
+        'new_block': block
     }
 
     return jsonify(response), 200
@@ -128,9 +185,17 @@ def mine():
 def full_chain():
     response = {
         # TODO: Return the chain and its current length
+        'chain': blockchain.chain,
+        'length': len(blockchain.chain)
     }
     return jsonify(response), 200
 
+def validate_chain():
+    result = blockchain.valid_chain(blockchain.chain)
+    response = {
+        'valid': result
+    }
+    return jsonify(response), 200
 
 # Run the program on port 5000
 if __name__ == '__main__':
