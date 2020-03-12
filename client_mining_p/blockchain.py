@@ -94,22 +94,22 @@ class Blockchain(object):
     def last_block(self):
         return self.chain[-1]
 
-    def proof_of_work(self, block):
-        """
-        Simple Proof of Work Algorithm
-        Stringify the block and look for a proof.
-        Loop through possibilities, checking each one against `valid_proof`
-        in an effort to find a number that is a valid proof
-        :return: A valid proof for the provided block
-        """
-        # TODO
-        # return proof
-        block_string = json.dumps(block, sort_keys=True).encode()
-        proof = 0
-        while self.valid_proof(block_string, proof) is False:
-            proof += 1
+    # def proof_of_work(self, block):
+    #     """
+    #     Simple Proof of Work Algorithm
+    #     Stringify the block and look for a proof.
+    #     Loop through possibilities, checking each one against `valid_proof`
+    #     in an effort to find a number that is a valid proof
+    #     :return: A valid proof for the provided block
+    #     """
+    #     # TODO
+    #     # return proof
+    #     block_string = json.dumps(block, sort_keys=True).encode()
+    #     proof = 0
+    #     while self.valid_proof(block_string, proof) is False:
+    #         proof += 1
 
-        return proof
+    #     return proof
 
     @staticmethod
     def valid_proof(block_string, proof):
@@ -210,10 +210,19 @@ def full_chain():
     }
     return jsonify(response), 200
 
+@app.route('/valid_chain', methods=['GET'])
 def validate_chain():
     result = blockchain.valid_chain(blockchain.chain)
     response = {
         'valid': result
+    }
+    return jsonify(response), 200
+
+@app.route('/last_block', methods=['GET'])
+def get_last_block():
+    last_block = blockchain.last_block
+    response = {
+        'last_block': last_block
     }
     return jsonify(response), 200
 
