@@ -5,6 +5,8 @@ import json
 from time import time
 from uuid import uuid4
 
+import requests
+
 from flask import Flask, jsonify, request
 
 
@@ -12,6 +14,7 @@ class Blockchain(object):
     def __init__(self):
         self.chain = []
         self.current_transactions = []
+        self.nodes = set()
 
         # Create the genesis block
         self.new_block(previous_hash=1, proof=100)
@@ -165,10 +168,10 @@ node_identifier = str(uuid4()).replace('-', '')
 blockchain = Blockchain()
 
 
-@app.route('/mine', methods=['GET'])
+@app.route('/mine', methods=['POST'])
 def mine():
     # Run the proof of work algorithm to get the next proof
-    proof = blockchain.proof_of_work(blockchain.last_block)
+    # proof = blockchain.proof_of_work(blockchain.last_block)
     # Forge the new Block by adding it to the chain with the proof
     last_block = blockchain.last_block
     last_block_string = json.dumps(last_block, sort_keys=True).encode()
@@ -185,11 +188,11 @@ def mine():
 
 
     previous_hash = blockchain.hash(blockchain.last_block)
-    block = blockchain.new_block(proof, previous_hash)
+    block = blockchain.new_block(sent_proof, previous_hash)
 
     blockchain.new_transaction(
         sender="0",
-        recipeient = node_identifier,
+        recipeient = sent_id,
         amount='21'
     )
     response = {
